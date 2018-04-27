@@ -1,0 +1,248 @@
+########## Uploading packages ###################
+library(readr)
+library(dplyr)
+library(psych)
+library(lmtest)
+library(leaps)
+
+####################### Uploading the data #####################################################
+xdf <- read_csv("C:/Users/Sebastien Verpile/Desktop/DS633/sjuFiles/xdf.csv")
+
+######## Exploring xdf data frame #######
+str(xdf)
+names(xdf)
+dim(xdf)
+
+##### Creating data frame with the distinct industries in the data #######
+industries<-unique(xdf$industry)
+
+######## Filtering out aerospace and defense companies from the data ##########
+d<-xdf %>% select(name:dps, sp500) %>% 
+filter(industry=="Aerospace & Defense" & sp500==1) %>%
+  na.omit() 
+
+########## Exploring filtered data frame ########
+names(d)
+str(d)
+dim(d)
+
+########## Histograms of the different attributes in the data ######### 
+par(mfrow=c(3,3))
+hist(d$price, main="Price",cex.main=1.5, ylab=NULL, 
+     xlab=NULL,col="chartreuse4", prob=T)
+lines(density(d$price), col="red", lwd=2)
+
+hist(d$mv, main="Market value", cex.main=1.5,ylab=NULL, 
+     xlab=NULL, col="cadetblue4", prob=T)
+lines(density(d$mv), col="red", lwd=2)
+
+hist(d$eps,main="Earnings per share",cex.main=1.5,ylab=NULL, 
+     xlab=NULL, col="darkgoldenrod1", prob=T)
+lines(density(d$eps), col="red", lwd=2)
+
+hist(d$epsf,main="Earnings per share forward",cex.main=1.5,ylab=NULL, 
+     xlab=NULL, col="darkblue", prob=T)
+lines(density(d$epsf), col="red", lwd=2)
+
+hist(d$cfps,main="Cash flow per share",cex.main=1.5,ylab=NULL, 
+     xlab=NULL, col="darkorchid3", prob=T)
+lines(density(d$cfps), col="red", lwd=2)
+
+hist(d$bvps,main="Book value per share",cex.main=1.5,ylab=NULL, 
+     xlab=NULL, col="mediumvioletred", prob=T)
+lines(density(d$bvps), col="red", lwd=2)
+
+hist(d$dps,main="Dividends per share",cex.main=1.5,ylab=NULL, 
+     xlab=NULL, col="yellow", prob=T)
+lines(density(d$dps), col="red", lwd=2)
+
+hist(d$dps,main="Price of oil",cex.main=1.5,ylab=NULL, 
+     xlab=NULL, col="black", prob=T)
+lines(density(d$oil), col="red", lwd=2)
+
+
+########### Boxplots of different attributes in the data ###############
+par(mfrow=c(3,3))
+boxplot(d$price, horizontal = T,
+        main="Price",cex.main=1.5, col="chartreuse4")
+boxplot(d$mv, horizontal = T,
+        main="Market value", cex.main=1.5, col="cadetblue4")
+boxplot(d$eps, horizontal = T,
+        main="Earnings per share",cex.main=1.5, col="darkgoldenrod1")
+boxplot(d$epsf, horizontal = T,
+        main="Earnings per share forward",cex.main=1.5, col="darkblue")
+boxplot(d$cfps, horizontal = T,
+        main="Cash flow per share",cex.main=1.5, col="darkorchid3")
+boxplot(d$bvps, horizontal = T,
+        main="Book value per share",cex.main=1.5, col="mediumvioletred")
+boxplot(d$dps, horizontal = T,
+        main="Dividends per share",cex.main=1.5,col="yellow")
+
+
+############ Time series plots of each attribute #############
+par(mfrow=c(3,3))
+ts.plot(d$price, 
+        gpars=list(ylab="Price", main="Price over time", 
+           lwd=2.5, col="chartreuse4"))
+ts.plot(d$mv,
+        gpars=list(ylab="Mv", main="Market value over time", 
+                   lwd=2.5, col="cadetblue4")) 
+ts.plot(d$eps,
+        gpars=list(ylab="Eps", main="Earnings per share over time", 
+                   lwd=2.5, col="darkgoldenrod1")) 
+ts.plot(d$epsf,
+        gpars=list(ylab="Epsf", main="Earnings per share forward over time", 
+                   lwd=2.5, col="darkblue"))
+ts.plot(d$cfps,
+        gpars=list(ylab="Cpsf", main="Cash flow per share over time", 
+                   lwd=2.5, col="darkorchid3"))
+ts.plot(d$bvps,
+        gpars=list(ylab="Bvps", main="Book value per share over time", 
+                   lwd=2.5, col="mediumvioletred"))
+ts.plot(d$dps,
+        gpars=list(ylab="Dps", main="Dividens per share over time", 
+                   lwd=2.5, col="yellow"))
+
+#################### Scatter plots of each attribute #####################
+par(mfrow=c(3,2))
+scatter.smooth(d$mv,d$price,
+    ylab="Price", xlab="Market value (r= 0.43)", 
+    main="Market value vs. Price", cex.lab=1.5,
+    lpars =list(col = "red", lwd = 2))
+scatter.smooth(d$eps,d$price,
+    ylab="Price", xlab="Earnings per share (r= 0.69)", 
+    main="Earnings per share vs. Price", cex.lab=1.5,
+    lpars =list(col = "red", lwd = 2))
+scatter.smooth(d$epsf,d$price,
+   ylab="Price", xlab="Earnings per share forward (r= 0.85)", 
+   main="Earnings per share forward vs. Price",cex.lab=1.5,
+  lpars =list(col = "red", lwd = 2))
+scatter.smooth(d$cfps,d$price,
+  ylab="Price", xlab="Cash flow per share (r= 0.73)", 
+  main="Cash flow per share vs. Price",cex.lab=1.5,
+  lpars =list(col = "red", lwd = 2))
+scatter.smooth(d$bvps,d$price,
+  ylab="Price", xlab="Book value per share (r= 0.09)", 
+  main="Book value per share vs. Price",cex.lab=1.5,
+  lpars =list(col = "red", lwd = 2))
+scatter.smooth(d$dps,d$price,
+    ylab="Price", xlab="Dividends per share (r= 0.62)", 
+    main="Dividends per share vs. Price",cex.lab=1.5,
+    lpars =list(col = "red", lwd = 2))
+
+
+################## Descriptive statistics ###################
+describe(d[,6:12])[,c("mean","median","sd","min","max","range","skew","kurtosis")]
+
+############## Correlation matrix/ plot ################
+library(GGally)
+library(corrplot)
+library(RColorBrewer)
+
+cor<-round(cor(d[,6:12]),2)
+
+# mat : is a matrix of data
+# ... : further arguments to pass to the native R cor.test function
+cor.mtest <- function(mat, ...) {
+  mat <- as.matrix(mat)
+  n <- ncol(mat)
+  p.mat<- matrix(NA, n, n)
+  diag(p.mat) <- 0
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      tmp <- cor.test(mat[, i], mat[, j], ...)
+      p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+    }
+  }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat <- cor.mtest(d[,6:12])
+
+#plot1
+corrplot(cor, method="color", col=brewer.pal(n=7, name="PuOr"),  
+         type="lower", order="hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45, #Text label color and rotation
+         # Combine with significance
+         p.mat = p.mat, sig.level = 0.01, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+)
+
+######## Linear regression model###############
+fit<-lm(price ~ epsf+oil ,data=d)
+summary(fit)
+dwtest(fit)
+names(fit)
+
+leap <- regsubsets(price~., data = d[,6:12], nbest = 10)
+leapsum <- summary(leap)
+plot(leap, scale = 'adjr2')
+
+deflm <- lm(price~., data = d[,6:12])
+deflm2 <- lm(price~.-eps, data = d[,6:12])
+summary(deflm)
+summary(deflm2)
+
+
+
+############## Residual analysis #################
+rdf<-data.frame(d,pred=fit$fitted.values,
+                resid=fit$residuals)
+
+
+
+par(mfcol=c(2,2))
+hist(rdf$resid, col="black", probability = T,
+xlim=c(-90,90), ylim=c(0,0.032), main="Hitogram of residuals",
+xlab="Residuals")
+lines(density(rdf$resid), col="red", lwd=2.9)
+ts.plot(rdf$resid, main="Time series plot of the residuals", ylab="Residuals");
+abline(h=0)
+plot(rdf$pred,rdf$price, main="Plot of predicted vs. actual values (Regression equation)",
+     xlab="Predicted values", ylab="Actual values"); 
+abline(lm(price~pred,data=rdf), col="red", lwd=2)
+scatter.smooth(rdf$pred,rdf$price,
+  ylab="Price", xlab="Predicted values", main="Plot of pedicted vs. actual values (Loess smooth)",
+  lpars =list(col = "red", lwd = 2))
+
+
+
+par(mfrow=c(3,3))
+scatter.smooth(rdf$resid, d$price, pch=16,
+     xlab="Residuals", ylab="Price", main="Residuals vs. Price",
+     lpars =list(col = "red", lwd = 1.5))
+scatter.smooth(rdf$resid, d$mv, pch=16,
+     xlab="Residuals", ylab="Market value", main="Residuals vs. Market value",
+     lpars =list(col = "red", lwd = 1.5))
+scatter.smooth(rdf$resid, d$eps, pch=16, 
+     xlab="Residuals", ylab="Earnings per share", main="Residuals vs. Earnings per share",
+     lpars =list(col = "red", lwd = 1.5))
+scatter.smooth(rdf$resid, d$epsf, pch=16, 
+     xlab="Residuals", ylab="Earnings per share forward", main="Residuals vs. Earnings per share forward",
+     lpars =list(col = "red", lwd = 1.5))
+scatter.smooth(rdf$resid, d$cfps, pch=16, 
+     xlab="Residuals", ylab="Cash flow per share", main="Residuals vs. Cash flow per share",
+     lpars =list(col = "red", lwd = 1.5))
+scatter.smooth(rdf$resid, d$bvps, pch=16, 
+     xlab="Residuals", ylab="Book value per share", main="Residuals vs. Book value per share",
+     lpars =list(col = "red", lwd = 1.5))
+scatter.smooth(rdf$resid, d$dps, pch=16, 
+     xlab="Residuals", ylab="Dividens per share", main="Residuals vs. Dividends per share",
+     lpars =list(col = "red", lwd = 1.5))
+
+################# Time series plot of actual and predicted values ############################ 
+ftsplot2 <- function(x,y){plot(x,type="l",lty=1,
+main="Time series plot of actual and predicted prices",
+col="blue", ylab="Price", xlab="Time");
+  legend(1,200, c("Predicted","Actual"), lty=c(2,1), 
+         lwd=c(1,1),col=c("red","blue"));
+lines(y,lty=2, col="red")}
+
+ftsplot2(rdf$price,rdf$pred)
+
+
+
+
