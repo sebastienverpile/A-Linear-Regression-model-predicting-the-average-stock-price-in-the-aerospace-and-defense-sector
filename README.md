@@ -1,0 +1,1 @@
+# A-Linear-Regression-model-predicting-the-average-stock-price-in-the-aerospace-and-defense-sector
